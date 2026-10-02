@@ -2,7 +2,7 @@
 
 An interactive concept for a company-wide project tracking portal — built to explore what a lightweight, PM-first alternative to heavier enterprise PPM tools could look like.
 
-**   **[View the live demo →](https://kostasoldman.github.io/project-tracking-portal/)****
+ **[View the live demo →](https://kostasoldman.github.io/project-tracking-portal/)**
 
 ## What it covers
 
