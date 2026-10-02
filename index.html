@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Tracking Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF2F5; --paper-raised:#FFFFFF; --ink:#16283A; --ink-soft:#55697A; --ink-faint:#8496A4;
+    --line:#C9D6DE; --teal:#2F6F6B; --teal-soft:#E1EEEC; --amber:#B67326; --amber-soft:#F5E9D6;
+    --red:#A63A2C; --red-soft:#F3DFDA; --navy-deep:#10233A; --navy-deep-ink:#EAF0F4; --grey:#5B6B76; --grey-soft:#E7EBEE; --grid-line: rgba(148,166,180,.16);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0E1720; --paper-raised:#15202B; --ink:#E6EDF2; --ink-soft:#9FB2C0; --ink-faint:#64798A;
+      --line:#2A3948; --teal:#5FA89F; --teal-soft:#17302C; --amber:#D9A45E; --amber-soft:#33260F;
+      --red:#DB8172; --red-soft:#33201A; --navy-deep:#0A141F; --navy-deep-ink:#E6EDF2; --grey:#9FB2C0; --grey-soft:#1E2A33; --grid-line: rgba(255,255,255,.05);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0E1720; --paper-raised:#15202B; --ink:#E6EDF2; --ink-soft:#9FB2C0; --ink-faint:#64798A;
+    --line:#2A3948; --teal:#5FA89F; --teal-soft:#17302C; --amber:#D9A45E; --amber-soft:#33260F;
+    --red:#DB8172; --red-soft:#33201A; --navy-deep:#0A141F; --navy-deep-ink:#E6EDF2; --grey:#9FB2C0; --grey-soft:#1E2A33; --grid-line: rgba(255,255,255,.05);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background-color:var(--paper);
+    color:var(--ink); font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,sans-serif; font-size:14.5px; line-height:1.5;
+  }
+  h1,h2,h3{font-family:"Fraunces",Georgia,serif; font-weight:600; margin:0; color:var(--ink);}
+  .num{font-family:"Fraunces",Georgia,serif;}
+
+  .shell{display:grid; grid-template-columns:246px 1fr; min-height:100vh;}
+  @media (max-width:900px){ .shell{grid-template-columns:1fr;} }
+
+  .sidebar{background:var(--navy-deep); color:var(--navy-deep-ink); padding:24px 20px; position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto;}
+  @media (max-width:900px){ .sidebar{position:static; height:auto; padding:14px 16px;} }
+  .brand{display:flex; flex-direction:column; gap:2px; margin-bottom:22px;}
+  .brand-mark{width:32px;height:32px; border:1.5px solid rgba(255,255,255,.4); border-radius:3px; display:flex; align-items:center; justify-content:center; font-family:"Fraunces",serif; font-weight:700; font-size:13px; margin-bottom:9px;}
+  .brand-title{font-family:"Fraunces",serif; font-size:15px; font-weight:600; line-height:1.25;}
+  .brand-sub{font-size:11px; color:rgba(234,240,244,.55); margin-top:2px;}
+
+  .back-link{all:unset; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; color:rgba(234,240,244,.6); margin-bottom:14px;}
+  .back-link:hover{color:#fff;}
+  .proj-title{font-family:"Fraunces",serif; font-size:14.5px; font-weight:600; line-height:1.3; margin-bottom:16px;}
+  .sections-label{font-size:11px; color:rgba(234,240,244,.4); margin-bottom:6px;}
+
+  .navlist{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:1px;}
+  .navlist button{all:unset; display:block; width:100%; box-sizing:border-box; cursor:pointer; color:rgba(234,240,244,.68); font-size:13px; font-family:inherit; padding:8px 10px; border-radius:3px; border-left:2px solid transparent;}
+  .navlist button:hover{color:#fff; background:rgba(255,255,255,.06);}
+  .navlist li.current button{color:#fff; border-left-color:var(--teal); background:rgba(255,255,255,.05);}
+
+  .sidebar-foot{margin-top:26px; padding-top:14px; border-top:1px solid rgba(255,255,255,.14); font-size:10.5px; color:rgba(234,240,244,.45); line-height:1.5;}
+  @media (max-width:900px){ .sidebar-foot{display:none;} }
+
+  main{padding:30px 36px 70px;}
+  @media (max-width:640px){ main{padding:20px 16px 50px;} }
+  .container{max-width:1160px; margin:0 auto;}
+
+  .breadcrumb{font-size:12px; color:var(--ink-faint); margin-bottom:6px;}
+  .recordbar{display:flex; justify-content:space-between; align-items:flex-end; gap:20px; padding-bottom:18px; margin-bottom:24px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
+  .recordbar h1{font-size:23px;}
+  .recordbar .meta{font-size:12.5px; color:var(--ink-soft); margin-top:5px;}
+  .actions{display:flex; gap:8px; flex-wrap:wrap;}
+  .btn{border:1px solid var(--line); background:var(--paper-raised); padding:7px 13px; font-size:12px; color:var(--ink); border-radius:2px; white-space:nowrap;}
+  .btn.primary{background:var(--navy-deep); color:#fff; border-color:var(--navy-deep);}
+  .status-pill{display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line); background:var(--paper-raised); padding:5px 11px; border-radius:3px; font-size:11.5px; color:var(--ink-soft);}
+  .status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .status-dot.blue{background:#3E6FA8;} .status-dot.green{background:var(--teal);} .status-dot.amber{background:var(--amber);} .status-dot.red{background:var(--red);} .status-dot.grey{background:var(--grey);}
+
+  .panel{display:none;} .panel.active{display:block;}
+  .view{display:none;} .view.active{display:block;}
+  .panel-title{font-size:17px; margin-bottom:16px;}
+  .panel-subtitle{font-size:15px; margin:30px 0 16px;}
+  .panel-intro{font-size:12.5px; color:var(--ink-faint); margin:-10px 0 20px; max-width:600px;}
+
+  .fieldgrid{display:grid; grid-template-columns:repeat(auto-fit, minmax(230px,1fr)); gap:18px; margin-bottom:28px; align-items:start;}
+  .fieldbox{border:1px solid var(--line); background:var(--paper-raised);}
+  .fieldbox-head{display:flex; justify-content:space-between; align-items:center; padding:9px 14px; border-bottom:1px solid var(--line); font-size:12px; font-weight:600; color:var(--ink-soft);}
+  .fieldbox-head .chev{color:var(--ink-faint); font-size:11px;}
+  .fieldbox-body{padding:4px 14px;}
+  .field-row{padding:9px 0; border-bottom:1px solid var(--line);}
+  .field-row:last-child{border-bottom:none;}
+  .field-label{font-size:11px; color:var(--ink-faint);}
+  .field-value{font-size:13.5px; color:var(--ink); margin-top:2px;}
+  .field-value.strong{font-weight:600;}
+  .badge{display:inline-block; padding:1px 7px; border-radius:1px; font-size:11.5px; font-weight:600; font-family:"IBM Plex Mono",monospace; background:transparent; border:1px solid currentColor;}
+  .badge.blue{color:#3E6FA8;} .badge.green{color:var(--teal);}
+  .badge.amber{color:var(--amber);} .badge.red{color:var(--red);}
+  .badge.grey{color:var(--grey);}
+  .badge.stamp{transform:rotate(-2deg); font-weight:700; letter-spacing:.02em; border-width:1.5px;}
+
+  .kpi-strip{display:flex; border:1px solid var(--line); background:var(--paper-raised); margin-bottom:28px; overflow-x:auto;}
+  .kpi{flex:1 1 0; min-width:130px; padding:16px 18px; border-right:1px solid var(--line);}
+  .kpi:last-child{border-right:none;}
+  .kpi-value{font-size:25px; font-weight:600; color:var(--ink);}
+  .kpi-value sup{font-size:12px; font-weight:400; color:var(--ink-faint); top:-.6em;}
+  .kpi-label{font-size:11.5px; color:var(--ink-soft); margin-top:3px;}
+
+  .bar-row{display:flex; align-items:center; gap:10px; margin-bottom:9px;}
+  .bar-row:last-child{margin-bottom:0;}
+  .bar-label{width:170px; flex-shrink:0; font-size:12.5px; color:var(--ink);}
+  @media (max-width:480px){ .bar-label{width:100px; font-size:11.5px;} }
+  .bar-track{flex:1; height:14px; background:var(--paper); border:1px solid var(--line);}
+  .bar-fill{height:100%; background:var(--teal);}
+  .bar-fill.deep{background:var(--navy-deep);}
+  .bar-fill.blue{background:#3E6FA8;} .bar-fill.amber{background:var(--amber);} .bar-fill.red{background:var(--red);} .bar-fill.grey{background:var(--grey);}
+  .bar-count{width:22px; text-align:right; font-size:12px; color:var(--ink-soft); flex-shrink:0;}
+
+  .grid-2{display:grid; grid-template-columns:1.3fr 1fr; gap:32px;}
+  @media (max-width:900px){ .grid-2{grid-template-columns:1fr;} }
+
+  .matrix-wrap{display:flex; gap:16px; align-items:flex-start; overflow-x:auto;}
+  .matrix-axis-y{display:flex; flex-direction:column-reverse; justify-content:space-between; padding:4px 0; height:200px; flex-shrink:0;}
+  .matrix-axis-y span{font-size:11px; color:var(--ink-faint); height:40px; display:flex; align-items:center;}
+  .matrix-grid{display:grid; grid-template-columns:repeat(5,40px); grid-template-rows:repeat(5,40px); gap:3px;}
+  .matrix-cell{display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:600; border:1px solid rgba(0,0,0,.06);}
+  .matrix-axis-x{display:grid; grid-template-columns:repeat(5,40px); gap:3px; margin-top:6px;}
+  .matrix-axis-x span{font-size:11px; color:var(--ink-faint); text-align:center;}
+  .matrix-axis-title{font-size:11px; color:var(--ink-soft); margin-top:9px;}
+  .matrix-legend{display:flex; gap:14px; margin-top:16px; flex-wrap:wrap;}
+  .matrix-legend div{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink-soft);}
+  .legend-swatch{width:10px;height:10px; flex-shrink:0;}
+
+  .table-scroll{overflow-x:auto; border:1px solid var(--line); background:var(--paper-raised); margin-bottom:10px;}
+  table{width:100%; border-collapse:collapse; min-width:640px;}
+  th{text-align:left; font-size:11px; font-weight:600; color:var(--ink-soft); padding:10px 14px; border-bottom:1px solid var(--line); white-space:nowrap;}
+  td{padding:11px 14px; font-size:12.5px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .tag{font-size:11.5px; color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
+  .score-chip{display:inline-block; min-width:24px; text-align:center; padding:1px 6px; border-radius:1px; font-weight:600; font-size:11.5px; font-family:"IBM Plex Mono",monospace; background:transparent; border:1px solid currentColor;}
+  .score-chip.high{color:var(--red);}
+  .score-chip.med{color:var(--amber);}
+  .score-chip.low{color:var(--teal);}
+  .table-note{font-size:11.5px; color:var(--ink-faint); margin-bottom:22px;}
+  tfoot td{font-weight:600; background:var(--paper);}
+  .view-link{background:none; border:none; color:var(--teal); font-size:12.5px; cursor:pointer; padding:0; font-family:inherit; font-weight:600;}
+  .view-link:hover{text-decoration:underline;}
+  .view-link[disabled]{color:var(--ink-faint); cursor:default; font-weight:400;}
+
+  .insights{border:1px solid var(--line); background:var(--paper-raised); margin-top:8px;}
+  .insight-row{display:flex; gap:12px; padding:13px 16px; border-bottom:1px solid var(--line); align-items:flex-start;}
+  .insight-row:last-child{border-bottom:none;}
+  .insight-icon{width:20px;height:20px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;}
+  .insight-icon svg{width:11px;height:11px;}
+  .insight-text{font-size:12.5px; color:var(--ink); line-height:1.55;}
+
+  .log-entry{border-left:2px solid var(--line); padding:2px 0 18px 18px; position:relative; margin-left:4px;}
+  .log-entry:last-child{padding-bottom:0;}
+  .log-entry::before{content:""; position:absolute; left:-5px; top:3px; width:8px; height:8px; border-radius:50%; background:var(--teal); border:2px solid var(--paper-raised);}
+  .log-date{font-size:11.5px; color:var(--ink-faint);}
+  .log-text{font-size:13px; color:var(--ink); margin-top:3px;}
+
+  footer{margin-top:44px; padding-top:16px; border-top:1px solid var(--line); font-size:11px; color:var(--ink-faint); line-height:1.7;}
+
+  [contenteditable="true"]{background:var(--amber-soft); outline:1px dashed var(--amber); outline-offset:1px; cursor:text; border-radius:1px;}
+  [contenteditable="true"]:focus{outline-style:solid;}
+  select.inline-select{font:inherit; font-family:"IBM Plex Mono",monospace; font-size:inherit; font-weight:inherit; color:inherit; background:var(--amber-soft); border:1px solid var(--amber); border-radius:1px; padding:1px 4px; cursor:pointer;}
+  .edit-banner{display:none; align-items:center; gap:8px; font-size:12px; color:var(--amber); background:var(--amber-soft); border:1px solid var(--amber); padding:7px 12px; margin-bottom:18px;}
+  .edit-banner.active{display:flex;}
+
+  .signed-in{display:flex; align-items:center; gap:10px; padding-bottom:18px; margin-bottom:18px; border-bottom:1px solid rgba(255,255,255,.14);}
+  .signed-in-avatar{width:30px;height:30px; flex-shrink:0; border:1.5px solid rgba(255,255,255,.4); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600;}
+  .signed-in-name{font-size:12.5px; font-weight:600; line-height:1.3;}
+  .signed-in-role{font-size:10.5px; color:rgba(234,240,244,.5); margin-top:1px;}
+
+  .ts-tabs{display:flex; gap:6px; margin-bottom:18px;}
+  .ts-tabs button{all:unset; cursor:pointer; padding:7px 14px; font-size:12.5px; border:1px solid var(--line); background:var(--paper-raised); color:var(--ink-soft);}
+  .ts-tabs button.current{background:var(--navy-deep); color:#fff; border-color:var(--navy-deep);}
+  .ts-panel{display:none;}
+  .ts-panel.active{display:block;}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <nav class="sidebar" aria-label="Navigation">
+    <div class="signed-in">
+      <div class="signed-in-avatar">KG</div>
+      <div>
+        <div class="signed-in-name">Konstantinos Gerontakis</div>
+        <div class="signed-in-role">Project Manager, IT Service Operations</div>
+      </div>
+    </div>
+
+    <!-- Portfolio-mode sidebar -->
+    <div id="sidebar-portfolio">
+      <div class="brand">
+        <div class="brand-mark">PT</div>
+        <div class="brand-title">Project Tracking<br>Portal</div>
+        <div class="brand-sub">Company-wide delivery view</div>
+      </div>
+      <ul class="navlist">
+        <li class="current" id="nav-all-projects"><button onclick="showPortfolio()">All Projects</button></li>
+        <li id="nav-timesheet"><button onclick="showTimesheetView()">My Timesheet</button></li>
+      </ul>
+      <div class="sidebar-foot">Portfolio Overview — status, health and financials across every active and closed project.</div>
+    </div>
+
+    <!-- Project-mode sidebar -->
+    <div id="sidebar-project" style="display:none;">
+      <button class="back-link" onclick="showPortfolio()">← All Projects</button>
+      <div class="proj-title">Core Banking Platform Migration</div>
+      <div class="sections-label">Sections</div>
+      <ul class="navlist" id="projnav">
+        <li class="current"><button data-tab="overview">Overview</button></li>
+        <li><button data-tab="details">Details</button></li>
+        <li><button data-tab="changerequests">Change Requests</button></li>
+        <li><button data-tab="financials">Financials</button></li>
+        <li><button data-tab="staffing">Staffing</button></li>
+        <li><button data-tab="tasks">Tasks</button></li>
+        <li><button data-tab="risks">Risks &amp; Issues</button></li>
+        <li><button data-tab="logs">Project Logs</button></li>
+        <li><button data-tab="lessons">Lessons Learned</button></li>
+        <li><button data-tab="reports">Reports</button></li>
+      </ul>
+      <div class="sidebar-foot">Lessons Learned opens only after go-live — one tab among many on the project record.</div>
+    </div>
+  </nav>
+
+  <main>
+    <div class="container">
+
+      <!-- ================= PORTFOLIO VIEW ================= -->
+      <div class="view active" id="view-portfolio">
+        <div class="breadcrumb">Projects</div>
+        <div class="recordbar">
+          <div>
+            <h1>Project Portfolio</h1>
+            <div class="meta">6 projects tracked, updated 17/09/2026</div>
+          </div>
+          <div class="actions">
+            <span class="btn">Filters</span>
+            <span class="btn primary">New Project Request</span>
+            <span class="btn edit-toggle" onclick="enterEditMode()">Edit</span>
+            <span class="btn primary save-toggle" style="display:none;" onclick="saveEditMode()">Save</span>
+            <span class="btn cancel-toggle" style="display:none;" onclick="cancelEditMode()">Cancel</span>
+          </div>
+        </div>
+        <div class="edit-banner">Editing — click any highlighted field to change it, then Save.</div>
+
+        <div class="kpi-strip">
+          <div class="kpi"><div class="kpi-value num">6</div><div class="kpi-label">Total projects</div></div>
+          <div class="kpi"><div class="kpi-value num">4</div><div class="kpi-label">Active</div></div>
+          <div class="kpi"><div class="kpi-value num">1</div><div class="kpi-label">Completed</div></div>
+          <div class="kpi"><div class="kpi-value num">2</div><div class="kpi-label">At risk / critical</div></div>
+          <div class="kpi"><div class="kpi-value num" style="color:var(--red);">2</div><div class="kpi-label">Recurring delays (2+ CRs)</div></div>
+          <div class="kpi"><div class="kpi-value num">€700.8<sup>K</sup></div><div class="kpi-label">Total approved budget</div></div>
+          <div class="kpi"><div class="kpi-value num">57<sup>%</sup></div><div class="kpi-label">Avg. completion</div></div>
+        </div>
+
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Project</th><th>PM</th><th>Phase</th><th>Health</th><th>Budget</th><th>Actual</th><th>% Complete</th><th>CRs</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td>Core Banking Platform Migration</td><td class="tag">A. Georgiou</td><td class="tag phase-field">Ready for Production</td>
+                <td><span class="badge blue">Completed</span></td><td class="tag">€130,775</td><td class="tag">€128,900</td><td class="tag">100%</td>
+                <td class="tag">1</td>
+                <td><button class="view-link" onclick="showProject('overview')">View</button></td>
+              </tr>
+              <tr>
+                <td>HR Self-Service Portal</td><td class="tag">E. Michailidou</td><td class="tag phase-field">Development</td>
+                <td><span class="badge green">On Track</span></td><td class="tag">€85,000</td><td class="tag">€52,300</td><td class="tag">62%</td>
+                <td class="tag">1</td>
+                <td><span class="view-link" disabled>View</span></td>
+              </tr>
+              <tr>
+                <td>Regional Logistics Rollout <span title="Recurring Delays" style="color:var(--red); font-weight:600;">⚠</span></td><td class="tag">N. Papas</td><td class="tag phase-field">UAT</td>
+                <td><span class="badge amber">At Risk</span></td><td class="tag">€210,000</td><td class="tag">€198,500</td><td class="tag">78%</td>
+                <td class="tag" style="color:var(--red); font-weight:600;">3</td>
+                <td><span class="view-link" disabled>View</span></td>
+              </tr>
+              <tr>
+                <td>Cybersecurity Awareness Platform</td><td class="tag">S. Lambrou</td><td class="tag phase-field">Analysis</td>
+                <td><span class="badge green">On Track</span></td><td class="tag">€45,000</td><td class="tag">€21,000</td><td class="tag">40%</td>
+                <td class="tag">0</td>
+                <td><span class="view-link" disabled>View</span></td>
+              </tr>
+              <tr>
+                <td>Data Warehouse Upgrade <span title="Recurring Delays" style="color:var(--red); font-weight:600;">⚠</span></td><td class="tag">T. Rigas</td><td class="tag phase-field">Planning</td>
+                <td><span class="badge red">Critical</span></td><td class="tag">€160,000</td><td class="tag">€95,000</td><td class="tag">55%</td>
+                <td class="tag" style="color:var(--red); font-weight:600;">2</td>
+                <td><span class="view-link" disabled>View</span></td>
+              </tr>
+              <tr>
+                <td>Customer Portal Redesign</td><td class="tag">I. Christou</td><td class="tag phase-field">Preparatory</td>
+                <td><span class="badge grey">Not Started</span></td><td class="tag">€70,000</td><td class="tag">€0</td><td class="tag">5%</td>
+                <td class="tag">0</td>
+                <td><span class="view-link" disabled>View</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-note">CRs = approved Change Requests against the completion date. 2+ auto-flags a project as Recurring Delays. Full drill-down record is built out for Core Banking Platform Migration — click "View".</div>
+
+        <div class="grid-2" style="margin-top:30px;">
+          <div>
+            <h2 class="panel-subtitle">Projects by Health</h2>
+            <div class="bar-row"><span class="bar-label">Completed</span><div class="bar-track"><div class="bar-fill blue" style="width:16.6%"></div></div><span class="bar-count">1</span></div>
+            <div class="bar-row"><span class="bar-label">On Track</span><div class="bar-track"><div class="bar-fill" style="width:33.3%"></div></div><span class="bar-count">2</span></div>
+            <div class="bar-row"><span class="bar-label">At Risk</span><div class="bar-track"><div class="bar-fill amber" style="width:16.6%"></div></div><span class="bar-count">1</span></div>
+            <div class="bar-row"><span class="bar-label">Critical</span><div class="bar-track"><div class="bar-fill red" style="width:16.6%"></div></div><span class="bar-count">1</span></div>
+            <div class="bar-row"><span class="bar-label">Not Started</span><div class="bar-track"><div class="bar-fill grey" style="width:16.6%"></div></div><span class="bar-count">1</span></div>
+
+            <h2 class="panel-subtitle">Upcoming Milestones</h2>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Project</th><th>Milestone</th><th>Due</th></tr></thead>
+                <tbody>
+                  <tr><td class="tag">HR Self-Service Portal</td><td>UAT Sign-off</td><td class="tag">30/09/2026</td></tr>
+                  <tr><td class="tag">Regional Logistics Rollout</td><td>Go-Live</td><td class="tag">15/10/2026</td></tr>
+                  <tr><td class="tag">Cybersecurity Awareness Platform</td><td>Pilot Launch</td><td class="tag">05/11/2026</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <h2 class="panel-subtitle">Top Risks Across Portfolio</h2>
+            <div class="insights">
+              <div class="insight-row">
+                <div class="insight-icon" style="background:var(--red-soft);"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.4" stroke-linecap="round"><path d="M12 8v5M12 16.5v.01M4 20h16L12 4 4 20z"/></svg></div>
+                <div class="insight-text"><strong>Regional Logistics Rollout</strong> — carrier integration delays. Open, Critical.</div>
+              </div>
+              <div class="insight-row">
+                <div class="insight-icon" style="background:var(--red-soft);"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.4" stroke-linecap="round"><path d="M12 8v5M12 16.5v.01M4 20h16L12 4 4 20z"/></svg></div>
+                <div class="insight-text"><strong>Data Warehouse Upgrade</strong> — budget re-approval pending. Open, Critical.</div>
+              </div>
+              <div class="insight-row">
+                <div class="insight-icon" style="background:var(--amber-soft);"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v5l3 2"/></svg></div>
+                <div class="insight-text"><strong>HR Self-Service Portal</strong> — change management resistance from branch staff. In progress.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <footer>
+          Sample data for demonstration purposes — company and personal names shown are fictional.
+        </footer>
+      </div>
+
+      <!-- ================= TIMESHEET VIEW ================= -->
+      <div class="view" id="view-timesheet">
+        <div class="breadcrumb">Timesheet</div>
+        <div class="recordbar">
+          <div>
+            <h1>My Timesheet</h1>
+            <div class="meta">Konstantinos Gerontakis, Project Manager, IT Service Operations</div>
+          </div>
+          <div class="actions">
+            <span class="btn edit-toggle" onclick="enterEditMode()">Edit</span>
+            <span class="btn primary save-toggle" style="display:none;" onclick="saveEditMode()">Save</span>
+            <span class="btn cancel-toggle" style="display:none;" onclick="cancelEditMode()">Cancel</span>
+          </div>
+        </div>
+        <div class="edit-banner">Editing — click any highlighted field to change it, then Save.</div>
+
+        <div class="fieldgrid" style="margin-bottom:24px;">
+          <div class="fieldbox">
+            <div class="fieldbox-head">This Week</div>
+            <div class="fieldbox-body">
+              <div class="field-row"><div class="field-label">Week of</div><div class="field-value">08–12 Dec 2025</div></div>
+              <div class="field-row"><div class="field-label">Assigned projects</div><div class="field-value">Core Banking Platform Migration, HR Self-Service Portal</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ts-tabs">
+          <button class="current" onclick="showTimesheetTab('forecast', this)">Forecast — Mondays</button>
+          <button onclick="showTimesheetTab('actual', this)">Actual — Fridays</button>
+        </div>
+
+        <!-- FORECAST -->
+        <div class="ts-panel active" id="ts-forecast">
+          <p class="panel-intro">Set Monday morning, for the week ahead. Each day should add up to 8 hours across your assigned projects.</p>
+          <div class="table-scroll" id="forecast-block">
+            <table>
+              <thead><tr><th>Project</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Total</th></tr></thead>
+              <tbody>
+                <tr><td>Core Banking Platform Migration</td><td class="tag">4</td><td class="tag">5</td><td class="tag">3</td><td class="tag">4</td><td class="tag">2</td><td class="tag">18</td></tr>
+                <tr><td>HR Self-Service Portal</td><td class="tag">4</td><td class="tag">3</td><td class="tag">5</td><td class="tag">4</td><td class="tag">6</td><td class="tag">22</td></tr>
+              </tbody>
+              <tfoot><tr><td>Daily total</td><td>8</td><td>8</td><td>8</td><td>8</td><td>8</td><td>40</td></tr></tfoot>
+            </table>
+          </div>
+          <div class="table-note"><span class="btn" onclick="submitTimesheet('forecast', this)">Submit forecast</span> &nbsp; Due every Monday — locks once submitted.</div>
+        </div>
+
+        <!-- ACTUAL -->
+        <div class="ts-panel" id="ts-actual">
+          <p class="panel-intro">Confirm Friday afternoon what actually happened — adjust any day that changed from your forecast.</p>
+          <div class="table-scroll" id="actual-block">
+            <table>
+              <thead><tr><th>Project</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Total</th></tr></thead>
+              <tbody>
+                <tr><td>Core Banking Platform Migration</td><td class="tag">4</td><td class="tag">6</td><td class="tag">3</td><td class="tag">5</td><td class="tag">3</td><td class="tag">21</td></tr>
+                <tr><td>HR Self-Service Portal</td><td class="tag">4</td><td class="tag">2</td><td class="tag">5</td><td class="tag">3</td><td class="tag">5</td><td class="tag">19</td></tr>
+              </tbody>
+              <tfoot><tr><td>Daily total</td><td>8</td><td>8</td><td>8</td><td>8</td><td>8</td><td>40</td></tr></tfoot>
+            </table>
+          </div>
+          <div class="table-note"><span class="btn primary" onclick="submitTimesheet('actual', this)">Submit actual</span> &nbsp; Due every Friday — imports straight into Staffing on both projects.</div>
+        </div>
+
+        <h2 class="panel-subtitle">Submission History</h2>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Week</th><th>Forecast</th><th>Actual</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td class="tag">01–05 Dec 2025</td><td class="tag">40</td><td class="tag">38</td><td><span class="badge blue">Locked</span></td></tr>
+              <tr><td class="tag">24–28 Nov 2025</td><td class="tag">40</td><td class="tag">40</td><td><span class="badge blue">Locked</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <footer>
+          Sample data for demonstration purposes — company and personal names shown are fictional.
+        </footer>
+      </div>
+
+      <!-- ================= PROJECT RECORD VIEW ================= -->
+      <div class="view" id="view-project">
+        <div class="breadcrumb">Projects ›</div>
+        <div class="recordbar">
+          <div>
+            <h1>Core Banking Platform Migration</h1>
+            <div class="meta">Project ID PT-2025-0142, IT Service Operations, Large Scale (&gt;100K)</div>
+          </div>
+          <div class="actions">
+            <span class="status-pill"><span class="status-dot blue"></span>Completed — Ready for Production</span>
+            <span class="btn">Copy URL</span>
+            <span class="btn primary">Export Report</span>
+            <span class="btn edit-toggle" onclick="enterEditMode()">Edit</span>
+            <span class="btn primary save-toggle" style="display:none;" onclick="saveEditMode()">Save</span>
+            <span class="btn cancel-toggle" style="display:none;" onclick="cancelEditMode()">Cancel</span>
+          </div>
+        </div>
+        <div class="edit-banner">Editing — click any highlighted field to change it, then Save.</div>
+
+        <!-- OVERVIEW -->
+        <section class="panel active" id="panel-overview">
+          <h2 class="panel-title">Overview</h2>
+          <div class="kpi-strip">
+            <div class="kpi"><div class="kpi-value num">100<sup>%</sup></div><div class="kpi-label">Complete</div></div>
+            <div class="kpi"><div class="kpi-value num">€130.8<sup>K</sup></div><div class="kpi-label">Approved budget</div></div>
+            <div class="kpi"><div class="kpi-value num">€128.9<sup>K</sup></div><div class="kpi-label">Actual cost</div></div>
+            <div class="kpi"><div class="kpi-value num">1.4<sup>%</sup></div><div class="kpi-label">Under budget</div></div>
+            <div class="kpi"><div class="kpi-value num">300</div><div class="kpi-label">Days, kickoff to go-live</div></div>
+          </div>
+          <div class="fieldgrid">
+            <div class="fieldbox">
+              <div class="fieldbox-head">Snapshot</div>
+              <div class="fieldbox-body">
+                <div class="field-row"><div class="field-label">Sponsor unit</div><div class="field-value">IT Service Operations</div></div>
+                <div class="field-row"><div class="field-label">Project Manager</div><div class="field-value">A. Georgiou</div></div>
+                <div class="field-row"><div class="field-label">Go-live date</div><div class="field-value">15/01/2026</div></div>
+                <div class="field-row"><div class="field-label">Overall / Budget / Schedule health</div><div class="field-value"><span class="badge blue">Completed</span> <span class="badge green">On Track</span> <span class="badge green">On Track</span></div></div>
+              </div>
+            </div>
+            <div class="fieldbox">
+              <div class="fieldbox-head">Open Items</div>
+              <div class="fieldbox-body">
+                <div class="field-row"><div class="field-label">Open risks</div><div class="field-value">1</div></div>
+                <div class="field-row"><div class="field-label">Open tasks</div><div class="field-value">0 of 6</div></div>
+                <div class="field-row"><div class="field-label">Lessons Learned session</div><div class="field-value"><span class="badge blue">Closed</span></div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- DETAILS -->
+        <section class="panel" id="panel-details">
+          <h2 class="panel-title">Details</h2>
+          <div class="fieldgrid">
+            <div class="fieldbox">
+              <div class="fieldbox-head">Basic Details</div>
+              <div class="fieldbox-body">
+                <div class="field-row"><div class="field-label">ID</div><div class="field-value">PT-2025-0142</div></div>
+                <div class="field-row"><div class="field-label">Title</div><div class="field-value">Core Banking Platform Migration</div></div>
+                <div class="field-row"><div class="field-label">Description</div><div class="field-value">Migration of core banking modules to the upgraded platform, including data migration and cutover.</div></div>
+                <div class="field-row"><div class="field-label">Category</div><div class="field-value">Large Scale (&gt;100K)</div></div>
+              </div>
+            </div>
+            <div class="fieldbox">
+              <div class="fieldbox-head">Progress</div>
+              <div class="fieldbox-body">
+                <div class="field-row"><div class="field-label">Status</div><div class="field-value"><span class="badge blue">Completed</span></div></div>
+                <div class="field-row"><div class="field-label">Phase</div><div class="field-value phase-field">Ready for Production</div></div>
+                <div class="field-row"><div class="field-label">Start date</div><div class="field-value">20/03/2025</div></div>
+                <div class="field-row"><div class="field-label">Original target date</div><div class="field-value">31/12/2025</div></div>
+                <div class="field-row"><div class="field-label">Completion date</div><div class="field-value">15/01/2026</div></div>
+                <div class="field-row"><div class="field-label">Approved Change Requests</div><div class="field-value">1 <span class="badge green" style="margin-left:6px;">Normal</span></div></div>
+                <div class="field-row"><div class="field-label">Phase health</div><div class="field-value">All 6 phases completed, Preparatory through Ready for Production</div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CHANGE REQUESTS -->
+        <section class="panel" id="panel-changerequests">
+          <h2 class="panel-title">Change Requests</h2>
+          <p class="panel-intro">Any change to the completion date requires a Change Request, approved by the C-level Steering Committee. Once a project reaches 2 approved CRs, it's automatically flagged as Recurring Delays on the Portfolio Overview.</p>
+          <div class="fieldgrid" style="margin-bottom:22px;">
+            <div class="fieldbox">
+              <div class="fieldbox-head">Rebaseline Summary</div>
+              <div class="fieldbox-body">
+                <div class="field-row"><div class="field-label">Original target date</div><div class="field-value">31/12/2025</div></div>
+                <div class="field-row"><div class="field-label">Current completion date</div><div class="field-value strong">15/01/2026</div></div>
+                <div class="field-row"><div class="field-label">Approved Change Requests</div><div class="field-value">1 of 2 (flag threshold)</div></div>
+                <div class="field-row"><div class="field-label">Flag status</div><div class="field-value"><span class="badge green">Normal</span></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>ID</th><th>Requested</th><th>Reason</th><th>Date change</th><th>Approved by</th><th>Approval date</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td class="tag">CR-2025-142-01</td><td class="tag">10/09/2025</td><td>Vendor hardware delivery delay pushed cutover readiness</td><td class="tag">31/12/2025 → 15/01/2026</td><td class="tag">C-level Steering Committee</td><td class="tag">18/09/2025</td><td><span class="badge green stamp">Approved</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-note">This project stayed under the flag threshold — one approved CR, one clean re-plan.</div>
+        </section>
+
+        <!-- FINANCIALS -->
+        <section class="panel" id="panel-financials">
+          <h2 class="panel-title">Financials</h2>
+          <div class="fieldgrid">
+            <div class="fieldbox">
+              <div class="fieldbox-head">Budget Overview</div>
+              <div class="fieldbox-body">
+                <div class="field-row"><div class="field-label">Request equivalent investment</div><div class="field-value">€149,775</div></div>
+                <div class="field-row"><div class="field-label">Approved CAPEX</div><div class="field-value">€130,775</div></div>
+                <div class="field-row"><div class="field-label">Approved CAPEX with VAT</div><div class="field-value">€162,161</div></div>
+                <div class="field-row"><div class="field-label">Approved OPEX</div><div class="field-value">€0</div></div>
+              </div>
+            </div>
+            <div class="fieldbox">
+              <div class="fieldbox-head">Actuals</div>
+              <div class="fieldbox-body">
+                <div class="field-row"><div class="field-label">Actual hours cost</div><div class="field-value">€128,900</div></div>
+                <div class="field-row"><div class="field-label">Variance vs. approved CAPEX</div><div class="field-value"><span class="badge green">-1.4%</span></div></div>
+                <div class="field-row"><div class="field-label">Demand hours (total)</div><div class="field-value">400</div></div>
+                <div class="field-row"><div class="field-label">Actual hours (total)</div><div class="field-value">390</div></div>
+                <div class="field-row"><div class="field-label">Recurring OPEX (cloud, post go-live)</div><div class="field-value">€2,400 / yr</div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- STAFFING -->
+        <section class="panel" id="panel-staffing">
+          <h2 class="panel-title">Staffing</h2>
+          <p class="panel-intro">Planned vs. actual hours by resource. Imported automatically from each person's weekly Timesheet — not edited here.</p>
+          <div class="table-scroll imported-data">
+            <table>
+              <thead><tr><th>Group / Resource</th><th>Rate</th><th>Start</th><th>End</th><th>Planned</th><th>Actual</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Core Delivery Team — K. Anastasiou</td><td class="tag">Standard</td><td class="tag">20/03/2025</td><td class="tag">15/01/2026</td><td class="tag">220</td><td class="tag" style="color:var(--red); font-weight:600;">235 ⚠</td><td><span class="score-chip high">Over plan</span></td></tr>
+                <tr><td>Business Analysts — M. Papadopoulou</td><td class="tag">Standard</td><td class="tag">20/03/2025</td><td class="tag">15/01/2026</td><td class="tag">80</td><td class="tag">78</td><td><span class="score-chip low">On plan</span></td></tr>
+                <tr><td>Infrastructure — (unassigned)</td><td class="tag">Standard</td><td class="tag">20/03/2025</td><td class="tag">15/01/2026</td><td class="tag">60</td><td class="tag">60</td><td><span class="score-chip low">On plan</span></td></tr>
+                <tr><td>QA / Test — D. Konstantinidis</td><td class="tag">Standard</td><td class="tag">20/03/2025</td><td class="tag">15/01/2026</td><td class="tag">40</td><td class="tag" style="color:var(--red); font-weight:600;">52 ⚠</td><td><span class="score-chip high">Over plan</span></td></tr>
+              </tbody>
+              <tfoot><tr><td>Total</td><td></td><td></td><td></td><td>400</td><td style="color:var(--red);">425 ⚠</td><td></td></tr></tfoot>
+            </table>
+          </div>
+          <div class="table-note">2 of 4 resources are over their planned hours — Core Delivery Team and QA / Test. Figures update every Friday when timesheets are submitted.</div>
+        </section>
+
+        <!-- TASKS -->
+        <section class="panel" id="panel-tasks">
+          <h2 class="panel-title">Tasks &amp; Milestones</h2>
+          <p class="panel-intro">Grouped by lifecycle phase: Preparatory → Planning → Analysis → Development → UAT → Ready for Production.</p>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Phase</th><th>Task</th><th>Owner</th><th>Due</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td class="tag">Preparatory</td><td>Kickoff meeting</td><td class="tag">Project Manager</td><td class="tag">25/03/2025</td><td><span class="score-chip low task-status-field">Done</span></td></tr>
+                <tr><td class="tag">Preparatory</td><td>IT security assessment</td><td class="tag">Infrastructure</td><td class="tag">02/04/2025</td><td><span class="score-chip low task-status-field">Done</span></td></tr>
+                <tr><td class="tag">Planning</td><td>Solution outline &amp; directional sizing</td><td class="tag">Business Analysis</td><td class="tag">07/04/2025</td><td><span class="score-chip low task-status-field">Done</span></td></tr>
+                <tr><td class="tag">Planning</td><td>Directional project plan</td><td class="tag">Project Manager</td><td class="tag">07/04/2025</td><td><span class="score-chip low task-status-field">Done</span></td></tr>
+                <tr><td class="tag">Analysis</td><td>Functional specifications sign-off</td><td class="tag">Business Analysis</td><td class="tag">15/05/2025</td><td><span class="score-chip low task-status-field">Done</span></td></tr>
+                <tr><td class="tag">Analysis</td><td>Detailed sizing &amp; plan update</td><td class="tag">Project Manager</td><td class="tag">15/05/2025</td><td><span class="score-chip low task-status-field">Done</span></td></tr>
+                <tr><td class="tag">Development</td><td>Technical specifications sign-off</td><td class="tag">Core Delivery Team</td><td class="tag">10/07/2025</td><td><span class="score-chip low task-status-field">Done</span></td></tr>
+                <tr><td class="tag">Development</td><td>Source code development &amp; SIT</td><td class="tag">Core Delivery Team</td><td class="tag">30/09/2025</td><td><span class="score-chip low task-status-field">Done</span></td></tr>
+                <tr><td class="tag">UAT</td><td>UAT execution &amp; sign-off</td><td class="tag">QA / Test</td><td class="tag">20/12/2025</td><td><span class="score-chip low task-status-field">Done</span></td></tr>
+                <tr><td class="tag">Ready for Production</td><td>Release management &amp; RCC approval</td><td class="tag">Project Manager</td><td class="tag">10/01/2026</td><td><span class="score-chip low task-status-field">Done</span></td></tr>
+                <tr><td class="tag">Ready for Production</td><td>Go-live</td><td class="tag">Core Delivery Team</td><td class="tag">15/01/2026</td><td><span class="score-chip low task-status-field">Done</span></td></tr>
+                <tr><td class="tag">Ready for Production</td><td>Post-rollout support</td><td class="tag">Core Delivery Team</td><td class="tag">30/01/2026</td><td><span class="score-chip low task-status-field">Done</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- RISKS & ISSUES -->
+        <section class="panel" id="panel-risks">
+          <h2 class="panel-title">Risks &amp; Issues</h2>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Risk</th><th>Category</th><th>Probability</th><th>Impact</th><th>Score</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Vendor delivery delay</td><td class="tag">Schedule</td><td class="tag">4</td><td class="tag">5</td><td><span class="score-chip high">20</span></td><td class="tag risk-status-field">Mitigated</td></tr>
+                <tr><td>Data migration integrity issues</td><td class="tag">Technical</td><td class="tag">3</td><td class="tag">5</td><td><span class="score-chip high">15</span></td><td class="tag risk-status-field">Open</td></tr>
+                <tr><td>Regulatory compliance gap (PSD2)</td><td class="tag">Compliance</td><td class="tag">2</td><td class="tag">5</td><td><span class="score-chip med">10</span></td><td class="tag risk-status-field">Closed</td></tr>
+                <tr><td>Key resource attrition</td><td class="tag">Resource</td><td class="tag">3</td><td class="tag">3</td><td><span class="score-chip med">9</span></td><td class="tag risk-status-field">Monitored</td></tr>
+                <tr><td>Third-party API rate limits</td><td class="tag">Technical</td><td class="tag">2</td><td class="tag">3</td><td><span class="score-chip med">6</span></td><td class="tag risk-status-field">Closed</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2 class="panel-subtitle">Probability × Impact Matrix</h2>
+          <div class="matrix-wrap">
+            <div class="matrix-axis-y"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+            <div>
+              <div class="matrix-grid">
+                <div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div><div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div><div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div><div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div><div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div>
+                <div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div><div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div><div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div><div class="matrix-cell" style="background:var(--red-soft); color:var(--red);">1</div><div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div>
+                <div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div><div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div><div class="matrix-cell" style="background:var(--amber-soft); color:var(--amber);">1</div><div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div><div class="matrix-cell" style="background:var(--red-soft); color:var(--red);">1</div>
+                <div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div><div class="matrix-cell" style="background:var(--amber-soft); color:var(--amber);">1</div><div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div><div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div><div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div>
+                <div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div><div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div><div class="matrix-cell" style="background:var(--amber-soft); color:var(--amber);">1</div><div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div><div class="matrix-cell" style="background:var(--paper); color:var(--ink-faint);">0</div>
+              </div>
+              <div class="matrix-axis-x"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+              <div class="matrix-axis-title">Impact — Probability on the left axis</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PROJECT LOGS -->
+        <section class="panel" id="panel-logs">
+          <h2 class="panel-title">Project Logs</h2>
+          <div>
+            <div class="log-entry"><div class="log-date">16/01/2026</div><div class="log-text">Go-live completed successfully; hypercare period started.</div></div>
+            <div class="log-entry"><div class="log-date">30/12/2025</div><div class="log-text">UAT sign-off received from Business; production date confirmed for 15/01.</div></div>
+            <div class="log-entry"><div class="log-date">15/10/2025</div><div class="log-text">Data migration dry-run completed; two medium-severity data quality issues resolved.</div></div>
+            <div class="log-entry"><div class="log-date">25/06/2025</div><div class="log-text">Vendor contract signed; environment provisioning kicked off.</div></div>
+            <div class="log-entry"><div class="log-date">10/04/2025</div><div class="log-text">Scope and requirements formally signed off by Business stakeholders.</div></div>
+          </div>
+        </section>
+
+        <!-- LESSONS LEARNED (one tab) -->
+        <section class="panel" id="panel-lessons">
+          <h2 class="panel-title">Lessons Learned</h2>
+          <p class="panel-intro">Opens only after go-live. Anonymous team input, evaluated per PMI's Lessons Learned Portal methodology and used to drive real changes on future projects — not just archived.</p>
+
+          <div class="fieldgrid" style="margin-bottom:22px;">
+            <div class="fieldbox">
+              <div class="fieldbox-head">Session</div>
+              <div class="fieldbox-body">
+                <div class="field-row"><div class="field-label">Project / Team</div><div class="field-value">Core Banking Platform Migration — Core Delivery Team</div></div>
+                <div class="field-row"><div class="field-label">Primary Knowledge Area</div><div class="field-value">Risk Management</div></div>
+                <div class="field-row"><div class="field-label">Status</div><div class="field-value"><span class="badge blue">Closed — 30/01/2026</span></div></div>
+                <div class="field-row"><div class="field-label">Submissions</div><div class="field-value strong">9 of 10 team members (90%), via anonymous public link / QR</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="kpi-strip">
+            <div class="kpi"><div class="kpi-value num">12</div><div class="kpi-label">Lessons captured</div></div>
+            <div class="kpi"><div class="kpi-value num">9<sup>/10</sup></div><div class="kpi-label">Team submitted</div></div>
+            <div class="kpi"><div class="kpi-value num">15.0<sup>/25</sup></div><div class="kpi-label">Avg. Priority Score</div></div>
+            <div class="kpi"><div class="kpi-value num">7</div><div class="kpi-label">High priority</div></div>
+          </div>
+
+          <h2 class="panel-subtitle">Lesson Detail — Example (LL-014-01)</h2>
+          <div class="fieldbox" style="margin-bottom:28px;">
+            <div class="fieldbox-head">Missing Risk Register at project kickoff</div>
+            <div class="fieldbox-body">
+              <div class="field-row"><div class="field-label">Description</div><div class="field-value">No Risk Register was created during Planning, so the team faced three critical issues with no mitigation plan in place.</div></div>
+              <div class="field-row"><div class="field-label">What went right?</div><div class="field-value">The team reacted quickly once the issues surfaced.</div></div>
+              <div class="field-row"><div class="field-label">What went wrong?</div><div class="field-value">No proactive risk identification — everything was handled reactively.</div></div>
+              <div class="field-row"><div class="field-label">Recommendation</div><div class="field-value strong">Always create a Risk Register at the kickoff meeting, with at least 10 identified risks.</div></div>
+              <div class="field-row"><div class="field-label">Knowledge Area / Phase</div><div class="field-value">Risk Management, Planning</div></div>
+              <div class="field-row"><div class="field-label">Ratings (1–5)</div><div class="field-value">Importance 5 (Critical), Recurrence 4 (Quite likely), Actionability 5 (Very easy)</div></div>
+              <div class="field-row"><div class="field-label">Priority Score</div><div class="field-value"><span class="score-chip high" style="font-size:14px;">20</span> &nbsp;(5 × 4)</div></div>
+              <div class="field-row"><div class="field-label">Preventable?</div><div class="field-value yesno-field">Yes</div></div>
+              <div class="field-row"><div class="field-label">Shared with other teams?</div><div class="field-value yesno-field">Partially</div></div>
+              <div class="field-row"><div class="field-label">Comment</div><div class="field-value" style="font-style:italic; color:var(--ink-soft);">"Recommend adding a Risk Management checklist to new PM onboarding."</div></div>
+            </div>
+          </div>
+
+          <h2 class="panel-subtitle">All Lessons — Ranked by Priority Score</h2>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Lesson</th><th>Knowledge Area</th><th>Phase</th><th>Score</th><th>Preventable</th></tr></thead>
+              <tbody>
+                <tr><td>Missing Risk Register at project kickoff</td><td class="tag">Risk Mgmt</td><td class="tag">Planning</td><td><span class="score-chip high">25</span></td><td class="tag yesno-field">Yes</td></tr>
+                <tr><td>Vendor SLA breach not escalated in time</td><td class="tag">Risk Mgmt</td><td class="tag">Development</td><td><span class="score-chip high">20</span></td><td class="tag yesno-field">Yes</td></tr>
+                <tr><td>Cutover communication gaps with branches</td><td class="tag">Communications</td><td class="tag">Development</td><td><span class="score-chip high">20</span></td><td class="tag yesno-field">Partially</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-note">Showing top 3 of 12 lessons, sorted by Priority Score = Importance × Recurrence (1–25). Full ranking available in the PDF export.</div>
+
+          <h2 class="panel-subtitle">Recommendations → Applied Improvements</h2>
+          <p class="panel-intro">This is where the tab earns its place: every high-priority recommendation is tracked until it changes how the next project runs.</p>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Recommendation</th><th>Knowledge Area</th><th>Status</th><th>Applied to</th></tr></thead>
+              <tbody>
+                <tr><td>Create a Risk Register at every project kickoff (min. 10 risks)</td><td class="tag">Risk Mgmt</td><td><span class="badge green">Adopted org-wide</span></td><td class="tag">Required Preparatory-phase task for all Large Scale projects</td></tr>
+                <tr><td>Formal impact analysis before approving change requests</td><td class="tag">Schedule Mgmt</td><td><span class="badge amber">In review</span></td><td class="tag">Proposed addition to the Planning-phase checklist</td></tr>
+                <tr><td>Standard weekly status report template across teams</td><td class="tag">Communications</td><td><span class="badge grey">Pending</span></td><td class="tag">Awaiting PMO sign-off</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- REPORTS -->
+        <section class="panel" id="panel-reports">
+          <h2 class="panel-title">Reports</h2>
+          <div class="fieldgrid">
+            <div class="fieldbox">
+              <div class="fieldbox-head">Available Reports</div>
+              <div class="fieldbox-body">
+                <div class="field-row"><div class="field-label">Status Report (PDF)</div><div class="field-value">Last generated 16/01/2026</div></div>
+                <div class="field-row"><div class="field-label">Lessons Learned Report (PDF)</div><div class="field-value">Generated on session close — 30/01/2026</div></div>
+                <div class="field-row"><div class="field-label">Financial Summary</div><div class="field-value">Auto-refreshes from Financials tab</div></div>
+              </div>
+            </div>
+          </div>
+          <h2 class="panel-subtitle">Budget vs. Actual</h2>
+          <div class="bar-row"><span class="bar-label">Approved CAPEX</span><div class="bar-track"><div class="bar-fill deep" style="width:100%"></div></div><span class="bar-count" style="width:60px;">€130.8K</span></div>
+          <div class="bar-row"><span class="bar-label">Actual cost</span><div class="bar-track"><div class="bar-fill" style="width:98.6%"></div></div><span class="bar-count" style="width:60px;">€128.9K</span></div>
+        </section>
+
+        <footer>
+          Sample data for demonstration purposes — company and personal names shown are fictional. PMBOK® is a registered mark of the Project Management Institute, Inc.
+        </footer>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  function setActiveView(id){
+    document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+    document.getElementById(id).classList.add('active');
+  }
+  function setPortfolioNavCurrent(id){
+    document.querySelectorAll('#sidebar-portfolio .navlist li').forEach(function(li){ li.classList.remove('current'); });
+    document.getElementById(id).classList.add('current');
+  }
+  function showPortfolio(){
+    setActiveView('view-portfolio');
+    document.getElementById('sidebar-project').style.display = 'none';
+    document.getElementById('sidebar-portfolio').style.display = 'block';
+    setPortfolioNavCurrent('nav-all-projects');
+  }
+  function showTimesheetView(){
+    setActiveView('view-timesheet');
+    document.getElementById('sidebar-project').style.display = 'none';
+    document.getElementById('sidebar-portfolio').style.display = 'block';
+    setPortfolioNavCurrent('nav-timesheet');
+  }
+  function showTimesheetTab(tab, btn){
+    document.querySelectorAll('.ts-panel').forEach(function(p){ p.classList.remove('active'); });
+    document.getElementById('ts-' + tab).classList.add('active');
+    document.querySelectorAll('.ts-tabs button').forEach(function(b){ b.classList.remove('current'); });
+    btn.classList.add('current');
+  }
+  function submitTimesheet(kind, btn){
+    var block = document.getElementById(kind + '-block');
+    block.classList.add('imported-data');
+    btn.textContent = (kind === 'forecast') ? 'Forecast submitted' : 'Actual submitted — imported to Staffing';
+    btn.setAttribute('disabled', 'true');
+    btn.style.pointerEvents = 'none';
+    btn.style.opacity = '0.6';
+  }
+  function showProject(tab){
+    setActiveView('view-project');
+    document.getElementById('sidebar-portfolio').style.display = 'none';
+    document.getElementById('sidebar-project').style.display = 'block';
+    document.querySelectorAll('#panel-overview, #panel-details, #panel-changerequests, #panel-financials, #panel-staffing, #panel-tasks, #panel-risks, #panel-logs, #panel-lessons, #panel-reports').forEach(function(p){ p.classList.remove('active'); });
+    document.getElementById('panel-' + tab).classList.add('active');
+    document.querySelectorAll('#projnav li').forEach(function(li){ li.classList.remove('current'); });
+    document.querySelectorAll('#projnav button').forEach(function(btn){
+      if(btn.getAttribute('data-tab') === tab){ btn.closest('li').classList.add('current'); }
+    });
+  }
+  document.querySelectorAll('#projnav button').forEach(function(btn){
+    btn.addEventListener('click', function(){ showProject(btn.getAttribute('data-tab')); });
+  });
+
+  // ---- Inline editing ----
+  var editSnapshot = new Map();
+
+  var STATUS_OPTIONS = ['Completed','On Track','At Risk','Critical','Not Started','Closed','Approved','Normal','Flagged','Adopted org-wide','In review','Pending'];
+  var STATUS_COLOR   = {'Completed':'blue','On Track':'green','At Risk':'amber','Critical':'red','Not Started':'grey','Closed':'blue','Approved':'green','Normal':'green','Flagged':'red','Adopted org-wide':'green','In review':'amber','Pending':'grey'};
+  var PHASE_OPTIONS  = ['Preparatory','Planning','Analysis','Development','UAT','Ready for Production'];
+  var YESNO_OPTIONS  = ['Yes','Partially','No'];
+  var RISK_STATUS_OPTIONS = ['Open','Mitigated','Monitored','Closed'];
+  var TASK_STATUS_OPTIONS = ['Done','In Progress','Blocked','Not Started'];
+  var TASK_STATUS_CHIP    = {'Done':'low','In Progress':'med','Blocked':'high','Not Started':'med'};
+
+  function buildSelect(options, current){
+    var html = '<select class="inline-select">';
+    var found = false;
+    options.forEach(function(opt){
+      if (opt === current) found = true;
+      html += '<option value="' + opt + '"' + (opt === current ? ' selected' : '') + '>' + opt + '</option>';
+    });
+    if (!found) html += '<option value="' + current + '" selected>' + current + '</option>';
+    html += '</select>';
+    return html;
+  }
+
+  function getEditableEls(){
+    var candidates = document.querySelectorAll('.field-value, td, .badge, .score-chip');
+    return Array.prototype.filter.call(candidates, function(el){
+      if (el.querySelector('.field-value, .badge, .score-chip, table, select')) return false;
+      if (el.closest('th')) return false;
+      if (el.querySelector('button') || el.classList.contains('view-link')) return false;
+      if (el.closest('.imported-data')) return false;
+      return true;
+    });
+  }
+
+  function enterEditMode(){
+    editSnapshot.clear();
+    getEditableEls().forEach(function(el, i){
+      el.dataset.editId = i;
+      editSnapshot.set(String(i), el.innerHTML);
+      var text = el.textContent.trim();
+
+      if (el.classList.contains('badge') && STATUS_OPTIONS.indexOf(text) !== -1) {
+        el.innerHTML = buildSelect(STATUS_OPTIONS, text);
+      } else if (el.classList.contains('phase-field')) {
+        el.innerHTML = buildSelect(PHASE_OPTIONS, text);
+      } else if (el.classList.contains('yesno-field')) {
+        el.innerHTML = buildSelect(YESNO_OPTIONS, text);
+      } else if (el.classList.contains('risk-status-field')) {
+        el.innerHTML = buildSelect(RISK_STATUS_OPTIONS, text);
+      } else if (el.classList.contains('task-status-field')) {
+        el.innerHTML = buildSelect(TASK_STATUS_OPTIONS, text);
+      } else {
+        el.setAttribute('contenteditable', 'true');
+      }
+    });
+    document.querySelectorAll('.edit-toggle').forEach(function(b){ b.style.display = 'none'; });
+    document.querySelectorAll('.save-toggle, .cancel-toggle').forEach(function(b){ b.style.display = 'inline-block'; });
+    document.querySelectorAll('.edit-banner').forEach(function(b){ b.classList.add('active'); });
+  }
+
+  function collapseSelects(){
+    document.querySelectorAll('select.inline-select').forEach(function(sel){
+      var val = sel.value;
+      var parent = sel.parentElement;
+      if (parent.classList.contains('badge')) {
+        parent.classList.remove('blue','green','amber','red','grey');
+        parent.classList.add(STATUS_COLOR[val] || 'grey');
+      } else if (parent.classList.contains('task-status-field')) {
+        parent.classList.remove('low','med','high');
+        parent.classList.add(TASK_STATUS_CHIP[val] || 'med');
+      }
+      parent.textContent = val;
+    });
+  }
+
+  function exitEditUI(){
+    document.querySelectorAll('[contenteditable="true"]').forEach(function(el){ el.removeAttribute('contenteditable'); });
+    document.querySelectorAll('.edit-toggle').forEach(function(b){ b.style.display = 'inline-block'; });
+    document.querySelectorAll('.save-toggle, .cancel-toggle').forEach(function(b){ b.style.display = 'none'; });
+    document.querySelectorAll('.edit-banner').forEach(function(b){ b.classList.remove('active'); });
+  }
+
+  function cancelEditMode(){
+    getEditableEls().forEach(function(el){
+      var id = el.dataset.editId;
+      if (id !== undefined && editSnapshot.has(id)) el.innerHTML = editSnapshot.get(id);
+    });
+    exitEditUI();
+  }
+
+  async function saveEditMode(){
+    collapseSelects();
+    exitEditUI();
+    try {
+      var art = (window.claude && typeof claude.use === 'function') ? await claude.use('artifact') : null;
+      if (art) {
+        await art.publish(document.documentElement.outerHTML);
+      } else {
+        alert('Saved in this view. Reopening the page may not keep changes here.');
+      }
+    } catch (e) {
+      alert('Saved in this view. Reopening the page may not keep changes here.');
+    }
+  }
+</script>
+
+</body>
+</html>
